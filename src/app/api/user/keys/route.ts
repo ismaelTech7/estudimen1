@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     const keyPrefix = api_key.substring(0, config.API_KEY_PREFIX_LENGTH);
 
     // Guardar la API key en la base de datos
-    const { data: savedKey, error } = await dbService.getClient()
+    const { data: savedKey, error } = await dbService.supabase
       .from('api_keys')
       .insert({
         user_id: userId,
@@ -146,11 +146,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json<ApiResponse<any>>({
       success: true,
       data: {
-        id: savedKey.id,
-        provider: savedKey.provider,
-        key_prefix: savedKey.key_prefix,
-        is_active: savedKey.is_active,
-        created_at: savedKey.created_at,
+        id: (savedKey as any).id,
+        provider: (savedKey as any).provider,
+        key_prefix: (savedKey as any).key_prefix,
+        is_active: (savedKey as any).is_active,
+        created_at: (savedKey as any).created_at,
       },
       message: 'API key added successfully',
     });

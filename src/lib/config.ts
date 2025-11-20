@@ -66,3 +66,8 @@ export function getConfig() {
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY!,
   };
 }
+
+// Helper para obtener la clave secreta JWT
+export function getJwtSecretKey() {
+  return process.env.JWT_SECRET || CONFIG.JWT_SECRET;
+}

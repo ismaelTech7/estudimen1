@@ -5,8 +5,9 @@ import { dbService } from '@/lib/db/service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Verificar autenticación
     const token = request.headers.get('Authorization')?.replace('Bearer ', '');
@@ -33,7 +34,7 @@ export async function GET(
     }
 
     const userId = payload.sub as string;
-    const planId = params.id;
+    const planId = id;
 
     // Obtener el plan de estudio con todas sus relaciones
     const { data: planData, error: planError } = await dbService.supabase

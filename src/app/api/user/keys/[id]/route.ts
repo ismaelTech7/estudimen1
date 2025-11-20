@@ -5,8 +5,9 @@ import { dbService } from '@/lib/db/service';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Verificar autenticación
     const token = request.headers.get('Authorization')?.replace('Bearer ', '');
@@ -33,7 +34,7 @@ export async function DELETE(
     }
 
     const userId = payload.sub as string;
-    const keyId = params.id;
+    const keyId = id;
 
     // Verificar que la clave pertenece al usuario
     const { data: apiKeyData, error: fetchError } = await dbService.supabase

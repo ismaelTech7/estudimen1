@@ -33,19 +33,26 @@ export interface StudyPlan {
   updated_at: string;
 }
 
+export type StudySessionStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+
+export type ResourceType = 'summary' | 'flashcards' | 'quiz';
+
 export interface StudySession {
   id: string;
-  user_id: string;
-  study_plan_id: string;
-  title: string;
-  description: string;
+  userId: string;
+  studyPlanId: string;
   subject: string;
-  duration_minutes: number;
-  scheduled_date: string;
-  completed_at: string | null;
-  score: number | null;
+  objective: string;
+  duration: number;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  scheduledDate: string;
+  completedAt: string | null;
   notes: string | null;
-  created_at: string;
+  studyPlan: {
+    title: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Resource {
@@ -62,15 +69,15 @@ export interface Resource {
 
 export interface Flashcard {
   id: string;
-  user_id: string;
-  study_plan_id: string;
-  front: string;
-  back: string;
+  resourceId: string;
+  question: string;
+  answer: string;
   difficulty: 'easy' | 'medium' | 'hard';
-  last_reviewed: string | null;
-  review_count: number;
-  correct_count: number;
-  created_at: string;
+  lastReviewed: string | null;
+  reviewCount: number;
+  correctCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Quiz {
@@ -88,7 +95,7 @@ export interface QuizQuestion {
   id: string;
   question: string;
   options: string[];
-  correct_answer: number;
+  correctAnswer: number;
   explanation: string;
 }
 
@@ -208,6 +215,7 @@ export interface AIQuiz {
   questions: QuizQuestion[];
   time_limit_minutes: number;
   difficulty: 'easy' | 'medium' | 'hard';
+  max_score?: number;
 }
 
 // Tipos de progreso y analytics

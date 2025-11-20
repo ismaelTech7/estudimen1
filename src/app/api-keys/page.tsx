@@ -252,7 +252,7 @@ export default function ApiKeysPage() {
                   <div className="text-center py-8">
                     <Key className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 mb-4">No tienes claves API configuradas</p>
-                    <Button onClick={() => document.querySelector('[data-state="add"]')?.click()}>
+                    <Button onClick={() => (document.querySelector('[data-state="add"]') as HTMLElement | null)?.click()}>
                       Añadir Primera Clave
                     </Button>
                   </div>

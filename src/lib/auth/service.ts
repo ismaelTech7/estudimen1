@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { getConfig } from '@/lib/config';
 import { dbService } from '@/lib/db/service';
+import { jwtService } from './jwt';
 import type { User } from '@/types';
 
 /**

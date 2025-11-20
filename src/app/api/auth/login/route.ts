@@ -47,7 +47,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar la contraseña
-    const isPasswordValid = await authService.comparePassword(password, user.password_hash);
+    const isPasswordValid = await authService.comparePassword(
+      password,
+      (user as { password_hash: string }).password_hash
+    );
     if (!isPasswordValid) {
       return NextResponse.json<ApiResponse<null>>({
         success: false,

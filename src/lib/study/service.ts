@@ -44,7 +44,7 @@ export class StudyService {
       }
 
       // Crear el plan de estudio en la base de datos
-      const { data: studyPlan, error: planError } = await dbService.getClient()
+      const { data: studyPlan, error: planError } = await dbService.supabase
         .from('study_plans')
         .insert({
           user_id: userId,
@@ -67,7 +67,7 @@ export class StudyService {
       // Crear las sesiones de estudio
       const sessions = aiPlan.sessions.map(session => ({
         user_id: userId,
-        study_plan_id: studyPlan.id,
+        study_plan_id: (studyPlan as any).id,
         title: session.title,
         description: session.description,
         subject: session.subject,
@@ -78,16 +78,16 @@ export class StudyService {
         notes: null,
       }));
 
-      const { error: sessionsError } = await dbService.getClient()
+      const { error: sessionsError } = await dbService.supabase
         .from('study_sessions')
         .insert(sessions);
 
       if (sessionsError) {
         // Si falla la creación de sesiones, eliminar el plan
-        await dbService.getClient()
+        await dbService.supabase
           .from('study_plans')
           .delete()
-          .eq('id', studyPlan.id);
+          .eq('id', (studyPlan as any).id);
         
         throw new Error(`Failed to create study sessions: ${sessionsError.message}`);
       }
@@ -430,7 +430,7 @@ export class StudyService {
       }
 
       // Eliminar en orden: primero las dependencias
-      await dbService.getClient().transaction(async () => {
+      await dbService.transaction(async () => {
         // Eliminar flashcards
         await dbService.getClient()
           .from('flashcards')

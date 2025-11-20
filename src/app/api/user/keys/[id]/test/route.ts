@@ -7,8 +7,9 @@ import { aiService } from '@/lib/ai/service';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Verificar autenticación
     const token = request.headers.get('Authorization')?.replace('Bearer ', '');
@@ -35,7 +36,7 @@ export async function POST(
     }
 
     const userId = payload.sub as string;
-    const keyId = params.id;
+    const keyId = id;
 
     // Obtener la clave API del usuario
     const { data: apiKeyData, error: fetchError } = await dbService.supabase

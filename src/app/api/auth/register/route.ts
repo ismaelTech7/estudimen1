@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         name,
         password_hash: passwordHash,
         is_active: true,
-      })
+      } as any)
       .select()
       .single();
 

@@ -25,7 +25,7 @@ export class DatabaseService {
           },
         },
         db: {
-          schema: 'public',
+          schema: 'public' as const,
         },
       }
     );
@@ -47,6 +47,13 @@ export class DatabaseService {
    */
   public getAuth() {
     return this.client.auth;
+  }
+
+  /**
+   * Obtiene el cliente de Supabase
+   */
+  public get supabase() {
+    return this.client;
   }
 
   /**
