@@ -8,12 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Brain, Eye, EyeOff, Chrome, Mail } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { Brain, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -27,48 +28,18 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) {
-        setError(error.message)
-      } else {
-        if (rememberMe) {
-          localStorage.setItem('rememberMe', 'true')
-        }
-        router.push('/dashboard')
+      await login(email, password)
+      
+      if (rememberMe) {
+        localStorage.setItem('rememberMe', 'true')
       }
-    } catch {
-      setError('Error al iniciar sesión')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleMagicLink = async () => {
-    if (!email) {
-      setError('Por favor ingresa tu correo electrónico')
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        },
-      })
-
-      if (error) {
-        setError(error.message)
-      } else {
-        toast.success('¡Enlace mágico enviado a tu correo!')
-      }
-    } catch {
-      setError('Error al enviar el enlace mágico')
+      
+      toast.success('¡Inicio de sesión exitoso!')
+      router.push('/dashboard')
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesión'
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -169,38 +140,6 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
-
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white dark:bg-slate-900 px-2 text-muted-foreground">
-                  O continúa con
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleMagicLink}
-                disabled={isLoading}
-              >
-                <Mail className="mr-2 h-4 w-4" />
-                Enlace Mágico
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => toast.info('Google OAuth próximamente')}
-                disabled={isLoading}
-              >
-                <Chrome className="mr-2 h-4 w-4" />
-                Google
-              </Button>
-            </div>
 
             <div className="text-center text-sm text-slate-600 dark:text-slate-300 mt-6">
               ¿No tienes una cuenta?{' '}

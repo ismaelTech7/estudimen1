@@ -2,24 +2,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authService } from '@/lib/auth/service';
 import { dbService } from '@/lib/db/service';
 import { z } from 'zod';
-import type { LoginRequest, ApiResponse, User } from '@/types';
+import type { RegisterRequest, ApiResponse, User } from '@/types';
 
 // Esquema de validación
-const loginSchema = z.object({
+const registerSchema = z.object({
   email: z.string().email('Invalid email format'),
-  password: z.string().min(1, 'Password is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters'),
 });
 
 /**
- * POST /api/auth/login
- * Inicia sesión de usuario
+ * POST /api/auth/register
+ * Registra un nuevo usuario
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
     // Validar el cuerpo de la petición
-    const validationResult = loginSchema.safeParse(body);
+    const validationResult = registerSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json<ApiResponse<null>>({
         success: false,
@@ -28,32 +32,44 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { email, password } = validationResult.data;
+    const { email, password, name } = validationResult.data;
 
-    // Buscar el usuario por email
+    // Verificar si el usuario ya existe
+    const { data: existingUser } = await dbService.getClient()
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (existingUser) {
+      return NextResponse.json<ApiResponse<null>>({
+        success: false,
+        error: 'User already exists',
+        message: 'An account with this email already exists',
+      }, { status: 409 });
+    }
+
+    // Hashear la contraseña
+    const passwordHash = await authService.hashPassword(password);
+
+    // Crear el usuario en la base de datos
     const { data: user, error: userError } = await dbService.getClient()
       .from('users')
-      .select('*')
-      .eq('email', email)
-      .eq('is_active', true)
+      .insert({
+        email,
+        name,
+        password_hash: passwordHash,
+        is_active: true,
+      })
+      .select()
       .single();
 
     if (userError || !user) {
       return NextResponse.json<ApiResponse<null>>({
         success: false,
-        error: 'Invalid credentials',
-        message: 'Invalid email or password',
-      }, { status: 401 });
-    }
-
-    // Verificar la contraseña
-    const isPasswordValid = await authService.comparePassword(password, user.password_hash);
-    if (!isPasswordValid) {
-      return NextResponse.json<ApiResponse<null>>({
-        success: false,
-        error: 'Invalid credentials',
-        message: 'Invalid email or password',
-      }, { status: 401 });
+        error: 'Database error',
+        message: 'Failed to create user',
+      }, { status: 500 });
     }
 
     // Generar tokens de autenticación
@@ -72,15 +88,15 @@ export async function POST(request: NextRequest) {
         refresh_token: tokens.refreshToken,
         expires_in: tokens.expiresIn,
       },
-      message: 'Login successful',
+      message: 'User registered successfully',
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Registration error:', error);
     return NextResponse.json<ApiResponse<null>>({
       success: false,
       error: 'Internal server error',
-      message: 'An unexpected error occurred during login',
+      message: 'An unexpected error occurred during registration',
     }, { status: 500 });
   }
 }

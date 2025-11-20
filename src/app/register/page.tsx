@@ -3,44 +3,32 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Brain, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
-export default function Register() {
+export default function RegisterPage() {
   const router = useRouter();
+  const { register } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
-    fullName: '',
-    educationalLevel: '',
+    name: '',
     acceptTerms: false
   });
-  const [passwordStrength, setPasswordStrength] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const educationalLevels = [
-    'Primaria',
-    'Secundaria',
-    'Bachillerato',
-    'Universidad',
-    'Posgrado',
-    'Autodidacta'
-  ];
-
-  const checkPasswordStrength = (password: string) => {
-    let strength = 0;
-    if (password.length >= 8) strength++;
-    if (/[a-z]/.test(password)) strength++;
-    if (/[A-Z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (/[^A-Za-z0-9]/.test(password)) strength++;
-    setPasswordStrength(strength);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
     const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined;
     
@@ -48,233 +36,225 @@ export default function Register() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-
-    if (name === 'password') {
-      checkPasswordStrength(value);
-    }
-  };
-
-  const getPasswordStrengthColor = () => {
-    if (passwordStrength <= 2) return 'bg-red-500';
-    if (passwordStrength <= 3) return 'bg-yellow-500';
-    return 'bg-green-500';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
+    setIsLoading(true);
 
+    // Validaciones
     if (formData.password !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden');
-      setLoading(false);
+      setIsLoading(false);
       return;
     }
 
-    if (passwordStrength < 3) {
-      setError('La contraseña debe ser más fuerte');
-      setLoading(false);
+    if (formData.password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!/[A-Z]/.test(formData.password)) {
+      setError('La contraseña debe contener al menos una mayúscula');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!/[a-z]/.test(formData.password)) {
+      setError('La contraseña debe contener al menos una minúscula');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!/[0-9]/.test(formData.password)) {
+      setError('La contraseña debe contener al menos un número');
+      setIsLoading(false);
       return;
     }
 
     if (!formData.acceptTerms) {
       setError('Debes aceptar los términos y condiciones');
-      setLoading(false);
+      setIsLoading(false);
       return;
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.fullName,
-            educational_level: formData.educationalLevel
-          }
-        }
-      });
-
-      if (error) throw error;
-
+      await register(formData.email, formData.password, formData.name);
+      
       setSuccess(true);
-      toast.success('¡Registro exitoso! Revisa tu correo para confirmar tu cuenta.');
+      toast.success('¡Registro exitoso! Bienvenido a Estudimen.');
+      
       setTimeout(() => {
-        router.push('/login');
+        router.push('/dashboard');
       }, 2000);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al registrar usuario';
       setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
+      <div className="w-full max-w-md">
+        {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center mb-6">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">E</span>
-            </div>
-            <span className="ml-2 text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Estudimen
-            </span>
+          <Link href="/" className="flex items-center justify-center space-x-2 mb-2">
+            <Brain className="h-10 w-10 text-blue-600" />
+            <span className="text-3xl font-bold gradient-text">Estudimen</span>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Crea tu cuenta</h1>
-          <p className="text-gray-600">Únete a miles de estudiantes que mejoran sus calificaciones con IA</p>
+          <p className="text-slate-600">
+            Únete a miles de estudiantes que mejoran sus calificaciones con IA
+          </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          {success ? (
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">¡Registro exitoso!</h3>
-              <p className="text-gray-600 mb-4">Revisa tu correo electrónico para confirmar tu cuenta.</p>
-              <p className="text-sm text-gray-500">Serás redirigido al inicio de sesión en un momento...</p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-red-600 text-sm">{error}</p>
+        <Card className="border-0 shadow-xl">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">Crea tu cuenta</CardTitle>
+            <CardDescription className="text-center">
+              Comienza tu viaje de aprendizaje inteligente
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {success ? (
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
-              )}
-
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre completo
-                </label>
-                <input
-                  type="text"
-                  id="fullName"
-                  name="fullName"
-                  required
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                  placeholder="Juan Pérez García"
-                />
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">¡Registro exitoso!</h3>
+                  <p className="text-gray-600">Bienvenido a Estudimen. Serás redirigido al dashboard en un momento...</p>
+                </div>
               </div>
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Correo electrónico
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  required
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                  placeholder="tucorreo@ejemplo.com"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="educationalLevel" className="block text-sm font-medium text-gray-700 mb-2">
-                  Nivel educativo
-                </label>
-                <select
-                  id="educationalLevel"
-                  name="educationalLevel"
-                  required
-                  value={formData.educationalLevel}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                >
-                  <option value="">Selecciona tu nivel educativo</option>
-                  {educationalLevels.map(level => (
-                    <option key={level} value={level}>{level}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Contraseña
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  required
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                  placeholder="Mínimo 8 caracteres"
-                />
-                <div className="mt-2">
-                  <div className="flex justify-between text-xs text-gray-500 mb-1">
-                    <span>Fuerza de contraseña</span>
-                    <span>{passwordStrength}/5</span>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    {error}
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor()}`}
-                      style={{ width: `${(passwordStrength / 5) * 100}%` }}
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nombre completo</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="Juan Pérez García"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                    className="bg-white dark:bg-slate-800"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Correo electrónico</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="tu@email.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    className="bg-white dark:bg-slate-800"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Contraseña</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Mínimo 8 caracteres"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-white dark:bg-slate-800 pr-10"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Debe contener mayúsculas, minúsculas y números
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Repite tu contraseña"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      required
+                      className="bg-white dark:bg-slate-800 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirmar contraseña
-                </label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                  placeholder="Repite tu contraseña"
-                />
-              </div>
+                <div className="flex items-start space-x-2">
+                  <Checkbox
+                    id="acceptTerms"
+                    name="acceptTerms"
+                    checked={formData.acceptTerms}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, acceptTerms: checked as boolean }))}
+                  />
+                  <Label htmlFor="acceptTerms" className="text-sm leading-relaxed">
+                    Acepto los <Link href="/privacy" className="text-blue-600 hover:underline">términos y condiciones</Link> y la <Link href="/privacy" className="text-blue-600 hover:underline">política de privacidad</Link>
+                  </Label>
+                </div>
 
-              <div className="flex items-start">
-                <input
-                  type="checkbox"
-                  id="acceptTerms"
-                  name="acceptTerms"
-                  checked={formData.acceptTerms}
-                  onChange={handleInputChange}
-                  className="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                />
-                <label htmlFor="acceptTerms" className="ml-2 text-sm text-gray-600">
-                  Acepto los <Link href="/privacy" className="text-purple-600 hover:text-purple-500">términos y condiciones</Link> y la <Link href="/privacy" className="text-purple-600 hover:text-purple-500">política de privacidad</Link>
-                </label>
-              </div>
+                <Button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Creando cuenta...
+                    </>
+                  ) : (
+                    'Crear cuenta'
+                  )}
+                </Button>
+              </form>
+            )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                {loading ? 'Creando cuenta...' : 'Crear cuenta'}
-              </button>
-            </form>
-          )}
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <div className="text-center text-sm text-slate-600 dark:text-slate-300 mt-6">
               ¿Ya tienes una cuenta?{' '}
-              <Link href="/login" className="text-purple-600 hover:text-purple-500 font-medium">
+              <Link href="/login" className="text-blue-600 hover:underline font-medium">
                 Inicia sesión aquí
               </Link>
-            </p>
-          </div>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
-  );
+  )
 }

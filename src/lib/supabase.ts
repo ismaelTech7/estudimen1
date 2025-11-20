@@ -1,6 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { dbService } from '@/lib/db/service';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Re-exportar el cliente de Supabase desde nuestro servicio
+export const supabase = dbService.getClient();

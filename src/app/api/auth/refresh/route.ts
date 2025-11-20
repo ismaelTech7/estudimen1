@@ -1,25 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authService } from '@/lib/auth/service';
-import { dbService } from '@/lib/db/service';
 import { z } from 'zod';
-import type { LoginRequest, ApiResponse, User } from '@/types';
+import type { ApiResponse } from '@/types';
 
 // Esquema de validación
-const loginSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(1, 'Password is required'),
+const refreshSchema = z.object({
+  refresh_token: z.string().min(1, 'Refresh token is required'),
 });
 
 /**
- * POST /api/auth/login
- * Inicia sesión de usuario
+ * POST /api/auth/refresh
+ * Refresca los tokens de autenticación
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
     // Validar el cuerpo de la petición
-    const validationResult = loginSchema.safeParse(body);
+    const validationResult = refreshSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json<ApiResponse<null>>({
         success: false,
@@ -28,59 +26,40 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { email, password } = validationResult.data;
+    const { refresh_token } = validationResult.data;
 
-    // Buscar el usuario por email
-    const { data: user, error: userError } = await dbService.getClient()
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .eq('is_active', true)
-      .single();
-
-    if (userError || !user) {
-      return NextResponse.json<ApiResponse<null>>({
-        success: false,
-        error: 'Invalid credentials',
-        message: 'Invalid email or password',
-      }, { status: 401 });
-    }
-
-    // Verificar la contraseña
-    const isPasswordValid = await authService.comparePassword(password, user.password_hash);
-    if (!isPasswordValid) {
-      return NextResponse.json<ApiResponse<null>>({
-        success: false,
-        error: 'Invalid credentials',
-        message: 'Invalid email or password',
-      }, { status: 401 });
-    }
-
-    // Generar tokens de autenticación
-    const tokens = await authService.generateTokens(user as User);
+    // Refrescar los tokens
+    const tokens = await authService.refreshTokens(refresh_token);
 
     return NextResponse.json<ApiResponse<{
-      user: User;
       access_token: string;
       refresh_token: string;
       expires_in: number;
     }>>({
       success: true,
       data: {
-        user: user as User,
         access_token: tokens.accessToken,
         refresh_token: tokens.refreshToken,
         expires_in: tokens.expiresIn,
       },
-      message: 'Login successful',
+      message: 'Tokens refreshed successfully',
     });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Token refresh error:', error);
+    
+    if (error instanceof Error && error.message === 'Invalid refresh token') {
+      return NextResponse.json<ApiResponse<null>>({
+        success: false,
+        error: 'Invalid refresh token',
+        message: 'The refresh token is invalid or expired',
+      }, { status: 401 });
+    }
+
     return NextResponse.json<ApiResponse<null>>({
       success: false,
       error: 'Internal server error',
-      message: 'An unexpected error occurred during login',
+      message: 'An unexpected error occurred during token refresh',
     }, { status: 500 });
   }
 }
