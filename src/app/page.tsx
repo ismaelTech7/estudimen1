@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { BookOpen, Brain, Clock, Trophy, Users, Zap, ArrowRight, CheckCircle } from 'lucide-react'
+import { BookOpen, Brain, Clock, Trophy, Users, Zap, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 export default function Home() {
@@ -193,7 +193,7 @@ export default function Home() {
                     ))}
                   </div>
                   <p className="text-slate-600 dark:text-slate-300 mb-6 italic">
-                    "{testimonial.content}"
+                    &ldquo;{testimonial.content}&rdquo;
                   </p>
                   <div>
                     <div className="font-semibold">{testimonial.name}</div>

@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ sessions: data });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       session: data,
       message: 'Study session created successfully'
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

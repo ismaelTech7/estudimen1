@@ -84,7 +84,7 @@ export default function Register() {
     }
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -102,8 +102,9 @@ export default function Register() {
       setTimeout(() => {
         router.push('/login');
       }, 2000);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

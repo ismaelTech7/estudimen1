@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Brain, Eye, EyeOff, Github, Chrome, Mail } from 'lucide-react'
+import { Brain, Eye, EyeOff, Chrome, Mail } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 
@@ -27,7 +27,7 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -40,7 +40,7 @@ export default function LoginPage() {
         }
         router.push('/dashboard')
       }
-    } catch (error) {
+    } catch {
       setError('Error al iniciar sesión')
     } finally {
       setIsLoading(false)
@@ -67,7 +67,7 @@ export default function LoginPage() {
       } else {
         toast.success('¡Enlace mágico enviado a tu correo!')
       }
-    } catch (error) {
+    } catch {
       setError('Error al enviar el enlace mágico')
     } finally {
       setIsLoading(false)

@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       session: data.session,
       message: 'Login successful'
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

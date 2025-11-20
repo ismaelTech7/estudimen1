@@ -10,7 +10,7 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,10 +26,11 @@ export default function ForgotPassword() {
 
       setSuccess(true);
       toast.success('¡Enlace reenviado exitosamente!');
-      setEmailSent(true);
+
       toast.success('¡Enlace de recuperación enviado a tu correo!');
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -47,8 +48,9 @@ export default function ForgotPassword() {
       if (error) throw error;
 
       setSuccess(true);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

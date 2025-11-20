@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 
 export default function Dashboard() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ user_metadata?: { full_name?: string }; email?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
