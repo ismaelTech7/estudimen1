@@ -6,6 +6,7 @@ import Providers from '@/components/providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://estudimen.vercel.app'),
   title: 'Estudimen - Tu Asistente de Estudio con IA',
   description: 'Estudimen es tu asistente de estudio inteligente con IA. Aprende más rápido y eficientemente con herramientas personalizadas, flashcards, quizzes y tutoría inteligente.',
   keywords: 'estudio, IA, aprendizaje, flashcards, quiz, tutoría, educación',
